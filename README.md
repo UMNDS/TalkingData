@@ -10,6 +10,6 @@ Here are some operations that I did to the training and test data:
 - Extract day_of_week and hour as new features from click_time
 - Drop click_time
 
-I did not delete the variable ip becasue I think it may be helpful when doing visualization (sum(ip))
+I did not delete the variable ip becasue I think it may be helpful while doing visualization (sum(ip))
 
 train_is is data from training data set when is_attributed == 1 , which may be useful for data visualization later
