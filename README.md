@@ -20,4 +20,4 @@ train_is is the data from training data set with is_attributed == 1 , which may 
 
 As for the GroupBys, they are the subdataset of the training/test data set with various grouping by
 
-The Train.csv, Train_is.csv, Test.csv are shared with by Google Drive, they are in the previous shared file WiDS, and I changed the name of that file to Endless Project
+The Train.csv, Train_is.csv, Test.csv are shared with by Google Drive, they are in the previous shared file "WiDS", and I changed the name of that file to "Endless Project"
