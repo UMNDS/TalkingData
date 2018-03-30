@@ -6,6 +6,7 @@
 - https://www.kaggle.com/pranav84/talkingdata-eda-to-model-evaluation-lb-0-9683
 - https://www.kaggle.com/kailex/talkingdata-eda-and-class-imbalance
 - https://www.kaggle.com/chubing/feature-engineering-and-xgboost
+- https://www.kaggle.com/aharless/try-pranav-s-r-lgbm-in-python
 
 
 Here are some operations that I did to the training and test data:
