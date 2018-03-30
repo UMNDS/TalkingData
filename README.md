@@ -19,4 +19,5 @@ I did not delete the variable ip becasue I think it may be helpful while doing v
 train_is is the data from training data set with is_attributed == 1 , which may be useful for data visualization later
 
 As for the GroupBys, they are the subdataset of the training/test data set with various grouping by
+
 The Train, Train_is, Test are shared with by Google Drive, in the previous shared file WiDS, and I changed the name of that file to Endless Project
