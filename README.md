@@ -2,9 +2,10 @@
 
 
 ## data_preparation
-- Reference: 
-https://www.kaggle.com/pranav84/talkingdata-eda-to-model-evaluation-lb-0-9683
-https://www.kaggle.com/kailex/talkingdata-eda-and-class-imbalance
+### Reference: 
+- https://www.kaggle.com/pranav84/talkingdata-eda-to-model-evaluation-lb-0-9683
+- https://www.kaggle.com/kailex/talkingdata-eda-and-class-imbalance
+- https://www.kaggle.com/chubing/feature-engineering-and-xgboost
 
 
 Here are some operations that I did to the training and test data:
