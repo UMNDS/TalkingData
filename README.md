@@ -2,7 +2,10 @@
 
 
 ## data_preparation
-- Reference: https://www.kaggle.com/pranav84/talkingdata-eda-to-model-evaluation-lb-0-9683
+- Reference: 
+https://www.kaggle.com/pranav84/talkingdata-eda-to-model-evaluation-lb-0-9683
+https://www.kaggle.com/kailex/talkingdata-eda-and-class-imbalance
+
 
 Here are some operations that I did to the training and test data:
 - Delete rows with NA
