@@ -12,4 +12,4 @@ Here are some operations that I did to the training and test data:
 
 I did not delete the variable ip becasue I think it may be helpful while doing visualization (sum(ip))
 
-train_is is the data from training data set when is_attributed == 1 , which may be useful for data visualization later
+train_is is the data from training data set with is_attributed == 1 , which may be useful for data visualization later
