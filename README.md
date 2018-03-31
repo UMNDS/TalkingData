@@ -14,11 +14,11 @@ Here are some operations that I did to the training and test data:
 - Drop attributed_time
 - Extract day_of_week and hour as new features from click_time
 - Drop click_time
+- Create new features with groupby(ip, hour, os/app/day_of_weak/device).count(# channel)
 
-I did not delete the variable ip becasue I think it may be helpful while doing visualization (sum(ip))
 
 train_is is the data from training data set with is_attributed == 1 , which may be useful for data visualization later
 
-As for the GroupBys, they are the subdataset of the training/test data set with various grouping by
+As for the GroupBys, they are the subdataset of the training/test data set with various grouping by, used for data visualization.
 
 The Train.csv, Train_is.csv, Test.csv are shared with by Google Drive, they are in the previous shared file "WiDS", and I changed the name of that file to "Endless Project"
