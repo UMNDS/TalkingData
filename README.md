@@ -9,6 +9,7 @@
 - https://www.kaggle.com/aharless/variation-on-alexander-kireev-s-dl   [Neural Network]
 - https://www.kaggle.com/yuliagm/be-careful-about-ips-as-a-signal
 - https://www.kaggle.com/pranav84/lightgbm-fixing-unbalanced-data-lb-0-9680  [Using var() and mean()]
+- https://www.kaggle.com/yuliagm/talkingdata-eda-plus-time-patterns [Data Visualization]
 
 
 
