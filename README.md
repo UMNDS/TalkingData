@@ -5,6 +5,7 @@
 - https://www.kaggle.com/kailex/talkingdata-eda-and-class-imbalance
 - https://www.kaggle.com/chubing/feature-engineering-and-xgboost
 - https://www.kaggle.com/aharless/try-pranav-s-r-lgbm-in-python
+- https://www.kaggle.com/graf10a/lightgbm-lb-0-9675
 
 
 ## data_preparation
