@@ -6,8 +6,9 @@
 - https://www.kaggle.com/chubing/feature-engineering-and-xgboost
 - https://www.kaggle.com/aharless/try-pranav-s-r-lgbm-in-python
 - https://www.kaggle.com/graf10a/lightgbm-lb-0-9675
-- https://www.kaggle.com/aharless/variation-on-alexander-kireev-s-dl   (Neural Network)
+- https://www.kaggle.com/aharless/variation-on-alexander-kireev-s-dl   [Neural Network]
 - https://www.kaggle.com/yuliagm/be-careful-about-ips-as-a-signal
+- https://www.kaggle.com/pranav84/lightgbm-fixing-unbalanced-data-lb-0-9680  [Using var() and mean()]
 
 
 
