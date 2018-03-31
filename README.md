@@ -7,6 +7,8 @@
 - https://www.kaggle.com/aharless/try-pranav-s-r-lgbm-in-python
 - https://www.kaggle.com/graf10a/lightgbm-lb-0-9675
 - https://www.kaggle.com/aharless/variation-on-alexander-kireev-s-dl   (Neural Network)
+- https://www.kaggle.com/yuliagm/be-careful-about-ips-as-a-signal
+
 
 
 ## data_preparation
