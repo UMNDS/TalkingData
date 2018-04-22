@@ -9,6 +9,8 @@ Created on Fri Apr 20 19:54:48 2018
 import matplotlib.pyplot as plt
 import pandas as pd
 from pylab import *
+import numpy as np
+import math
 
 
 #%% Read data
@@ -22,8 +24,29 @@ train_pp['ip'] = train_pp['ip'].astype('int64')
 
 
 #%% Number of unique values
+#plt.figure(figsize=(15, 8))
+#cols = ['ip', 'app', 'device', 'os', 'channel']
+#uniques = [len(train[col].unique()) for col in cols]
+#sns.set(font_scale = 1.2)
+#ax = sns.barplot(cols, uniques, log = True)
+#ax.set(xlabel='Feature', ylabel='log(unique count)', title = 'Number of unique values per feature')
+#for p, uniq in zip(ax.patches, uniques):
+#    height = p.get_height()
+#    ax.text(p.get_x()+p.get_width()/2.,
+#            height + 10,
+#            uniq,
+#            ha="center") 
+# for col, uniq in zip(cols, uniques):
+#     ax.text(col, uniq, uniq, color='black', ha="center")
 
+plt.figure(figsize=(20, 12))
+cols = ['ip', 'app', 'device', 'os', 'channel'] # bars
+log_uniq = [math.log(len(train[col].unique())) for col in cols] # height
+y_pos = np.arange(len(cols))
 
+plt.bar(y_pos, log_uniq, color = ['darkorange', 'yellow', 'orange', 'gold', 'khaki'])
+plt.xticks(y_pos, cols)
+plt.show()
 
 
 #%% Explain IP
