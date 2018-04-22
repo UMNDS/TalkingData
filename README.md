@@ -31,6 +31,7 @@ The Train.csv, Train_is.csv, Test.csv are shared with by Google Drive, they are 
 ## Time_Series
 
 ## LightGBM
+https://medium.com/@pushkarmandot/https-medium-com-pushkarmandot-what-is-lightgbm-how-to-implement-it-how-to-fine-tune-the-parameters-60347819b7fc
 
 ## XGBoost
 
