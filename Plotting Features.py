@@ -172,45 +172,194 @@ train_1 = train[train['is_attributed'] == 1]
 #
 def ppAttributedTime(df):
     df['attributed_time'] = pd.to_datetime(df['attributed_time'])
-    df['day_of_week'] = df['attributed_time'].dt.dayofweek
-    df['click_hour'] = df['attributed_time'].dt.hour
+    df['wday_a'] = df['attributed_time'].dt.dayofweek
+    df['hour_a'] = df['attributed_time'].dt.hour
+    df['click_time'] = pd.to_datetime(df['click_time'])
+    df['wday_c'] = df['click_time'].dt.dayofweek
+    df['hour_c'] = df['click_time'].dt.hour
     return df
 
 train_1_pp = ppAttributedTime(train_1)
 
 #%%
-counts = train_1_pp[['day_of_week', 'click_hour', 'is_attributed']].groupby(by = ['day_of_week', 'click_hour'], as_index = False).count() 
-counts.columns = ['day_of_week', 'click_hour', 'click_count']
-counts['x_axis'] = counts['day_of_week'].map(str) + "d" + counts['click_hour'].map(str) + "h" 
-counts = counts.sort_values(by = ['day_of_week', 'click_hour'],  ascending = True)
+counts_c = train_1_pp[['wday_c', 'hour_c', 'is_attributed']].groupby(by = ['wday_c', 'hour_c'], as_index = False).count() 
+counts_c.columns = ['wday_c', 'hour_c', 'click_count_c']
+counts_c['x_axis'] = counts_c['wday_c'].map(str) + "d" + counts_c['hour_c'].map(str) + "h" 
+counts_c = counts_c.sort_values(by = ['wday_z', 'hour_c'],  ascending = True)
+merge = counts.merge(counts_c, on = 'x_axis', how = 'left')
+merge = merge[['click_count', 'click_count_c', 'x_axis']]
+#merge = merge.sort_values(by = ['day_of_week', 'click_hour'],  ascending = True)
 
-x = counts['x_axis']
-y = counts[['click_count']]
+x = merge['x_axis']
+y_left = merge[['click_count_c']] # c
+y_right = merge[['click_count']] # a
 #%%
-fig = plt.figure(figsize=(25,14))
+fig = plt.figure(figsize=(27,12))
 ax1 = fig.add_subplot(111)
 # font style
 font_label = {'family' : 'serif', 'weight' : 'normal','size' : 25,}
 font_title = {'family' : 'serif', 'weight' : 'bold','color'  : 'dimgray', 'size' : 35,}
-sns.set(font = "serif")
 # plot left y axis
-n = len(counts)
+n = len(merge)
 latent = [i for i in range(n)]
-ax1.plot(latent, y, 'gold')
+l1, = ax1.plot(latent, y_left, 'gold') # c
 plt.xticks(arange(n), x)
 plt.xticks(fontsize = 17, rotation = 60)
 plt.yticks(fontsize = 23)
-ax1.set_ylabel('Count of Clicks', font_label)
+ax1.set_ylabel('Count of Clicks on click_time', font_label)
+# plot right y axis    
+ax2 = ax1.twinx() 
+l2, = ax2.plot(latent, y_right,'r', color = "dimgray")
+plt.yticks(fontsize = 23)
+ax2.set_ylabel('Count of Clicks on attributed_time', font_label)
 # add title
-ax1.set_title("Count of Clicks on attributed time", font_title) 
+ax1.set_title("Count of Clicks on click_time and attributed_time", font_title) 
+# add grid
+plt.grid(color = 'black', linestyle = '--', linewidth = 1, axis = 'y')
+# add legend
+plt.legend(handles = [l1, l2,], labels = ['Count of clicks on click_time', 'Count of Clicks on attributed_time'], loc = 'best', fontsize = 17)
+
+plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/d_h_a_c_time.jpg") 
+plt.show()
+
+
+#%%
+################################################################################################
+########################## Conversion Rates on Each Features ###################################
+################################################################################################
+#%%###################### Conversion rate on 300 popular IPs ###################################
+proportion = train_pp[['ip', 'is_attributed']].groupby('ip', as_index = False).mean().sort_values('is_attributed', ascending = False)
+counts = train_pp[['ip', 'is_attributed']].groupby('ip', as_index = False).count().sort_values('is_attributed', ascending = False)
+merge = counts.merge(proportion, on = 'ip', how = 'left')
+merge.columns = ['ip', 'click_count', 'prop_downloaded']
+merge['x_axis'] = "ip " + merge['ip'].map(str)
+merge = merge.sort_values(by = ['click_count'],  ascending = False)
+merge = merge[:100]
+
+x_axis = merge['x_axis']
+y_left = merge[['click_count']]
+y_right = merge[['prop_downloaded']]
+#%%
+###### Plot the data
+fig = plt.figure(figsize=(35,17))
+ax1 = fig.add_subplot(111)
+# font style
+font_label = {'family' : 'serif', 'weight' : 'normal','size' : 25,}
+font_title = {'family' : 'serif', 'weight' : 'bold', 'size' : 35,}
+# plot left y axis
+n = len(merge)
+latent = [i for i in range(n)]
+l1, = ax1.plot(latent, y_left, 'gold')
+plt.xticks(arange(n), x_axis)
+plt.xticks(fontsize = 15, rotation = 80)
+plt.yticks(fontsize = 23)
+ax1.set_ylabel('Count of Clicks', font_label)
+# plot right y axis    
+ax2 = ax1.twinx() 
+l2, = ax2.plot(latent, y_right,'r', color = "gray")
+plt.yticks(fontsize = 23)
+ax2.set_ylabel('Proportion Downloaded', font_label)
+# add title
+ax1.set_title("Conversion Rates over Counts of 100 Most Popular IPs", font_title) 
 # add grid
 plt.rc('grid', linestyle="--", color='gray')
 plt.grid(True)
 # add legend
-plt.legend( labels = ['Count of clicks'], loc = 'best', fontsize = 20)
+plt.legend(handles = [l1, l2,], labels = ['Count of clicks', 'Proportion downloaded'], loc = 'best', fontsize = 20)
 
-#plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/d_h_train.jpg") ########################################
+plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/cr_ip.jpg") 
 plt.show()
+
+
+#%%###################### Conversion rates ###################################
+proportion = train_rs[['channel', 'is_attributed']].groupby('channel', as_index = False).mean().sort_values('is_attributed', ascending = False)
+counts = train_rs[['channel', 'is_attributed']].groupby('channel', as_index = False).count().sort_values('is_attributed', ascending = False)
+merge = counts.merge(proportion, on = 'channel', how = 'left')
+merge.columns = ['channel', 'click_count', 'prop_downloaded']
+merge['x_axis'] = "chan " + merge['channel'].map(str)
+merge = merge.sort_values(by = ['click_count'],  ascending = False)
+merge.shape
+
+#from __future__ import division
+merge = merge[:80]
+#n = len(merge)
+#for i in range(n):
+#    merge[i:i+1][['prop_downloaded']] = 1/merge[i:i+1][['prop_downloaded']]
+
+x_axis = merge['x_axis']
+y_left = merge[['click_count']]
+y_right = merge[['prop_downloaded']]
+
+###### Plot the data
+fig = plt.figure(figsize=(35,17))
+ax1 = fig.add_subplot(111)
+# font style
+font_label = {'family' : 'serif', 'weight' : 'normal','size' : 25,}
+font_title = {'family' : 'serif', 'weight' : 'bold', 'size' : 35,}
+# plot left y axis
+n = len(merge)
+latent = [i for i in range(n)]
+l1, = ax1.plot(latent, y_left, 'gold')
+plt.xticks(arange(n), x_axis)
+plt.xticks(fontsize = 21, rotation = 80)
+plt.yticks(fontsize = 23)
+ax1.set_ylabel('Count of Clicks', font_label)
+# plot right y axis    
+ax2 = ax1.twinx() 
+l2, = ax2.plot(latent, y_right,'r', color = "gray")
+plt.yticks(fontsize = 23)
+ax2.set_ylabel('Proportion Downloaded', font_label)
+# add title
+ax1.set_title("Conversion Rates over Counts of Channels", font_title) 
+# add grid
+plt.rc('grid', linestyle="--", color='gray')
+plt.grid(True)
+# add legend
+plt.legend(handles = [l1, l2,], labels = ['Count of clicks', 'Reciprocal of Proportion'], loc = 'best', fontsize = 23)
+
+plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/cr_chan_rs.jpg") 
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
