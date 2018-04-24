@@ -11,7 +11,7 @@ import pandas as pd
 from pylab import *
 import numpy as np
 import math
-
+import seaborn as sns
 
 #%% Read data
 train_pp = pd.read_csv('//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/train_pp.csv')
@@ -30,8 +30,8 @@ train_pp['ip'] = train_pp['ip'].astype('int64')
 ################################# Number of Unique Values ######################################
 ################################################################################################
 #%% 
-plt.figure(figsize=(20, 15))
-plt.rcParams['axes.facecolor'] = 'gainsboro'
+plt.figure(figsize=(18, 14))
+plt.rcParams['axes.facecolor'] = 'darkcyan'
 sns.set(font = "serif")
 
 cols = ['ip', 'app', 'device', 'os', 'channel'] # bars
@@ -39,24 +39,24 @@ uniques = [len(train[col].unique()) for col in cols]
 log_uniq = [math.log(len(train[col].unique())) for col in cols] # height
 y_pos = np.arange(len(cols))
 
-plt.bar(y_pos, log_uniq, color = ['mistyrose', 'navajowhite', 'azure', 'honeydew', 'khaki'])
+plt.bar(y_pos, log_uniq, color = ['lightseagreen', 'steelblue', 'azure', 'mediumturquoise', 'lightsteelblue'])
 #plt.rc('font', family = 'serif', size = 25) # font style
-font_label = {'family' : 'serif', 'weight' : 'normal','size' : 22,}
+font_label = {'family' : 'serif', 'weight' : 'normal','size' : 37,}
 # x axis
-plt.xticks(y_pos, cols, fontsize = 22)
+plt.xticks(y_pos, cols, fontsize = 34)
 plt.xlabel('Features', font_label)
 # y axis
-plt.yticks(fontsize = 22)
+plt.yticks(fontsize = 34)
 plt.ylabel('Log(number of unique values)', font_label)
 # add title
-font_title = {'family' : 'serif', 'weight' : 'bold', 'size' : 28,}
+font_title = {'family' : 'serif', 'weight' : 'bold', 'size' : 45,}
 plt.title('Number of Unique Values for Each Feature', font_title)
 # set grid
 plt.grid(color = 'black', linestyle = '--', linewidth = 1, axis = 'y')
 # set tag
 x = np.arange(5)
 for a,b in zip(x, uniques):
-    plt.text(a, math.log(b)+0.01, '%.0f' %b, ha = 'center', va = 'bottom', fontsize = 22)
+    plt.text(a, math.log(b)+0.01, '%.0f' %b, ha = 'center', va = 'bottom', fontsize = 30)
 
 plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/count_uniq.jpg") 
 plt.show()
@@ -65,7 +65,7 @@ plt.show()
 
 
 
-
+#%%
 ################################################################################################
 ##################################### Explain IP ###############################################
 ################################################################################################
@@ -116,48 +116,50 @@ plt.show()
 ################################################################################################
 #%% Conversion Rates over Counts of Click Time (nip_wday_hour)
 ##### Create the data
-counts = train_o[['day_of_week', 'click_hour', 'is_attributed']].groupby(by = [ 'day_of_week', 'click_hour'], as_index = False).count() 
-counts.dtypes
-proportion = train_o[['day_of_week', 'click_hour', 'is_attributed']].groupby(by = ['day_of_week', 'click_hour'], as_index = False).mean() 
-proportion.dtypes
-merge = counts.merge(proportion, on = ['day_of_week', 'click_hour'], how = 'left')
-merge.columns = ['day_of_week', 'click_hour', 'click_count', 'prop_downloaded']
-merge['x_axis'] = merge['day_of_week'].map(str) + "d" + merge['click_hour'].map(str) + "h" 
-merge = merge.sort_values(by = ['day_of_week', 'click_hour'],  ascending = True)
+counts = train_o[['channel', 'is_attributed']].groupby(by = ['channel'], as_index = False).count() 
+#counts.dtypes
+proportion = train_o[['channel', 'is_attributed']].groupby(by = ['channel'], as_index = False).mean() 
+#proportion.dtypes
+merge = counts.merge(proportion, on = ['channel'], how = 'left')
+merge.columns = ['channel', 'click_count', 'prop_downloaded']
+merge['x_axis'] = "chan" + merge['channel'].map(str) 
+merge = merge.sort_values(by = ['click_count'],  ascending = False)
+
+merge = merge[:50]
 
 x_axis = merge['x_axis']
 y_left = merge[['click_count']]
 y_right = merge[['prop_downloaded']]
 
 ###### Plot the data
-fig = plt.figure(figsize=(25,14))
+fig = plt.figure(figsize=(23,10))
 ax1 = fig.add_subplot(111)
 # font style
-font_label = {'family' : 'serif', 'weight' : 'normal','size' : 25,}
-font_title = {'family' : 'serif', 'weight' : 'bold','color'  : 'dimgray', 'size' : 35,}
+font_label = {'family' : 'serif', 'weight' : 'bold','size' : 30,}
+font_title = {'family' : 'serif', 'weight' : 'bold','color'  : 'black', 'size' : 40,}
 #sns.set(font = "serif")
 # plot left y axis
-n = len(counts)
+n = len(x_axis)
 latent = [i for i in range(n)]
-l1, = ax1.plot(latent, y_left, 'gold')
+l1, = ax1.plot(latent, y_left, color = 'lightcoral', linewidth = 4.0)
 plt.xticks(arange(n), x_axis)
-plt.xticks(fontsize = 17, rotation = 60)
-plt.yticks(fontsize = 23)
-ax1.set_ylabel('Count of Clicks', font_label)
+plt.xticks(fontsize = 18, rotation = 60)
+plt.yticks(fontsize = 25)
+#ax1.set_ylabel('Number of Clicks', font_label)
 # plot right y axis    
 ax2 = ax1.twinx() 
-l2, = ax2.plot(latent, y_right,'r', color = "dimgray")
-plt.yticks(fontsize = 23)
-ax2.set_ylabel('Proportion Downloaded', font_label)
+l2, = ax2.plot(latent, y_right,'r', color = "dodgerblue", linewidth = 4.0)
+plt.yticks(fontsize = 25) 
+#ax2.set_ylabel('Proportion Downloaded', font_label)
 # add title
-ax1.set_title("Conversion Rates over Counts of Click Time", font_title) 
+ax1.set_title("Conversion Rates over Counts of Channels", font_title) 
 # add grid
 plt.rc('grid', linestyle="--", color='gray')
 plt.grid(True)
 # add legend
-plt.legend(handles = [l1, l2,], labels = ['Count of clicks', 'Proportion downloaded'], loc = 'best', fontsize = 20)
+plt.legend(handles = [l1, l2,], labels = ['Number of clicks', 'Proportion downloaded'], loc = 'best', fontsize = 25)
 
-#plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/d_h_train.jpg") ########################################
+plt.savefig("//Files.umn.edu/cse/UmSaveDocs/zhao1020/Desktop/TalkingData_data/Undersampling/cr_chan_trn.jpg")
 plt.show()
 
 
@@ -303,7 +305,7 @@ l1, = ax1.plot(latent, y_left, 'gold')
 plt.xticks(arange(n), x_axis)
 plt.xticks(fontsize = 21, rotation = 80)
 plt.yticks(fontsize = 23)
-ax1.set_ylabel('Count of Clicks', font_label)
+ax1.set_ylabel('Number of Clicks', font_label)
 # plot right y axis    
 ax2 = ax1.twinx() 
 l2, = ax2.plot(latent, y_right,'r', color = "gray")
