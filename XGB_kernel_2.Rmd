@@ -1,0 +1,235 @@
+---
+title: "Feature Engineering and XGboost"
+author: "Chubing Zeng"
+output:
+  html_document:
+    number_sections: true
+    code_folding: show
+    toc: true
+    toc_depth: 6
+    fig_width: 10
+    highlight: tango
+    theme: cosmo
+    smart: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# Introduction
+
+The motivation of my kernel is to: 
+
+* Explore possible data pre-processing and feature engineering methods
+* Explore parameter tuning for XGboost
+
+I learnt a lot from this kernel for XGboost - [data.table + xgb](https://www.kaggle.com/kailex/data-table-xgb)
+
+# Data pre-processing 
+
+## Choose a subset of training data
+There are two things that make the dataset challenging:
+
+1. The sample size is huge (about 1.8 billion)
+2. It is highly imbalanced (less than 1% of the data have is_attributed = 1)
+
+To ease computation burden, I have chosen a subset of the training data for training. To do that, I
+
+1. Kept all positive observations (observations with is_attributed = 1) 
+2. Randomly selected 5 million observations from null observations(observations with is_attributed = 1)
+
+<span style="color:red"> I only selected 5 million observations (which is far from enough!) from the control observations because the run-time and memory limit of Kernel. For better prediction accuray, I would use a much larger subsample. I selected 4e7 observations from null observations when I ran this script on my local computer and the AUC is much higher</span>
+
+### read in data
+```{r libraries, message=FALSE}
+library(data.table)
+library(dplyr)
+library(xgboost)
+library(ggplot2)
+
+train <- fread("../input/train.csv", select =c("ip", "app", "device", "os", "channel", "click_time", "is_attributed"),showProgress=F,colClasses=c("ip"="numeric","app"="numeric","device"="numeric","os"="numeric","channel"="numeric","click_time"="character","is_attributed"="numeric"))
+test <- fread("../input/test.csv", select =c("ip", "app", "device", "os", "channel", "click_time"),showProgress=F,colClasses=c("ip"="numeric","app"="numeric","device"="numeric","os"="numeric","channel"="numeric","click_time"="character"))
+
+invisible(gc())
+```
+
+### subset training data
+```{r subset, message = FALSE}
+set.seed(0)
+train <- train[c(which(train$is_attributed == 1),sample(which(train$is_attributed == 0),1e7,replace = F)), ]
+```
+
+## Have a look at training and testing data {.tabset .tabset-fade .tabset-pills} 
+### Training data
+```{r glimpse train}
+str(train)
+```
+
+### Test data
+```{r glimpse2 test}
+str(test)
+```
+
+# Feature engineering 
+I think it's more efficient to first combine the training and testing dataset, and do feature engineering on the combined dataset. 
+
+```{r datcombine, message = FALSE}
+y <- train$is_attributed
+n_train = nrow(train)
+dat_combined <- rbind(train,test[,-1],fill = T)
+rm(train,test)
+invisible(gc())
+```
+
+## Datatime variable
+In R package **dplyr**, there are some functions that conviniently convert datatime variable. The hour of click looks like an interesting variable to me. 
+But I don't think the year, day of month or day of week of click would be useful. So I only keep a **hour** variable. 
+
+
+## Count variable
+Variables such as **ip** and **app** are actually categorical variables. Ideally we would want to treat them as factor and use One-Hot encoding. But they have so many levels! 
+One-hot encoding is not feasible. 
+
+To solve this issue, I created some new variables that are the counts for unique values for each variable. 
+
+### Interaction terms
+There are only 6 predictors in the dataset. In order to create more features, and also to account for potential interaction effect of variables, I creates all possible two-way interactions 
+terms and some three way interaction terms that might be useful. 
+
+```{r processing, message = FALSE}
+dat_combined[, `:=`(hour = hour(click_time))
+             ][, ip_count := .N, by = "ip"
+               ][, app_count := .N, by = "app"
+                 ][, channel_count := .N, by = "channel"
+                   ][, device_count := .N, by = "device"
+                     ][, os_count := .N, by = "os"
+                       ][, app_count := .N, by = "app"
+                         ][, ip_app := .N, by = "ip,app"
+                           ][, ip_dev := .N, by = "ip,device"
+                             ][, ip_os := .N, by = "ip,os"
+                               ][, ip_channel := .N, by = "ip,channel"
+                                 ][,ip_hour := .N, by = "ip,hour"
+                                   ][,app_device := .N, by = "app,device"
+                                     ][,app_channel := .N, by = "app,channel"
+                                         ][,channel_hour := .N, by = "channel,hour"
+                                           ][,ip_app_channel := .N, by = "ip,app,channel"
+                                                 ][,app_channel_hour := .N, by = "app,channel,hour"
+                                                   ][,ip_app_hour := .N, by = "ip,app,hour"
+                                                     ][, c("ip","click_time", "is_attributed") := NULL]
+
+invisible(gc())
+```
+
+I dropped variable **ip** because I think **ip_count** makes more sense. **click_time** was also dropped once I created variable **hour**. 
+
+Let's take a look at the processed data. 
+I learnt from this post - [TalkingData EDA and class imbalance](
+https://www.kaggle.com/kailex/data-table-xgb) to make the following plot. 
+
+The following plot shows the number of unique values for each variable. 
+
+```{r plot, message = FALSE,warning = FALSE}
+dat_combined[, lapply(.SD, uniqueN), .SDcols = colnames(dat_combined)] %>%
+  melt(variable.name = "features", value.name = "unique_values") %>%
+  ggplot(aes(reorder(features, -unique_values), unique_values)) +
+  geom_bar(stat = "identity", fill = "hotpink2") + 
+  scale_y_log10(breaks = c(50,100,250, 500, 10000, 50000)) +
+  geom_text(aes(label = unique_values), vjust = 1.6, color = "white", size=2) +
+  theme_minimal() +
+  labs(x = "features", y = "Number of unique values")
+ 
+invisible(gc())
+```
+
+## Split training and testing
+
+Convert combined data back into processed training and testing datasets. 
+
+```{r processed, message = FALSE,warning = FALSE}
+within_train_index <- sample(c(1:n_train),0.9*n_train,replace = F) ## split the training dataset into train & validation
+processed_train_train = dat_combined[1:n_train,][within_train_index]
+y1 = y[1:n_train][within_train_index]
+processed_train_val = dat_combined[1:n_train,][-within_train_index]
+y2 = y[1:n_train][-within_train_index]
+processed_test = dat_combined[-c(1:n_train),]
+rm(dat_combined)
+rm(y)
+invisible(gc())
+```
+
+
+# XGboost
+
+## Get data ready for modeling
+```{r model_dat, message = FALSE}
+model_train <- xgb.DMatrix(data = data.matrix(processed_train_train), label = y1)
+rm(processed_train_train)
+invisible(gc())
+model_val <- xgb.DMatrix(data = data.matrix(processed_train_val), label = y2)
+rm(processed_train_val)
+invisible(gc())
+xgb_test <- xgb.DMatrix(data = data.matrix(processed_test))
+rm(processed_test)
+invisible(gc())
+```
+
+## XGboost hyper parameters
+
+### Tree complexity related hyper parameters
+
+* **max_depth** controls the the max depth of the trees. Higher value of **max_depth** increases model complexity but at the same time can lead to over-fitting. Typical values range from 3-10. Here I set it to be 7. 
+* **gamma** controls the penalty on model complexity. Higher **gamma** decreases model complexity and decrease the chance of over-fitting. Typical values range from 0-2. I set it to be 0.9. 
+* **min_child_weight** controls the minimum sum of weight of all observations in a child. Higher value prevents over-fitting. Typical value ranges from 1-20. 
+
+### Boosting related hyper parameters
+
+* **num_of_round**, **n_estimators** control the number of trees. Higher value means higher model complexity. The best value also depends on the learning rate **eta**. For this dataset, I found a larger number of trees gives better results. I set **num_of_round** to be 1000 when I ran this script on my local computer. But for this kernel, I only set it to be 100 to save time. 
+* **subsample** and **colsample_bytree** controls the proportion of observations and proportion of columns to be randomly sampled, respectively. Higher value of **subsample** means a larger batch of sample was selected. Low value of **subsample** might lead to under-fitting. Similar idea can be applied to **colsample_bytree**. Typical range would be 0.7-1 for **subsample** and 0.4-0.9 for **colsample_bytree**
+* **eta** controls the step size/learning rate of the algorithm. Smaller eta usually gives higher accuracy, but the algorithm converges slower. Typical values range from 0.1-1. 
+* **scale_pos_weight** can be useful for imbalanced dataset. For this data, I would set it to be a large value, say 300. 
+
+## Parameters I set
+```{r params, message = FALSE}
+params <- list(objective = "binary:logistic",
+                 booster = "gbtree",
+                 eval_metric = "auc",
+                 nthread = 7,
+                 eta = 0.05,
+                 max_depth = 10,
+                 gamma = 0.9,
+                 subsample = 0.8,
+                 colsample_bytree = 0.8,
+                 scale_pos_weight = 50,
+                 nrounds = 100)
+```
+
+## Build model
+```{r model, message = FALSE}
+myxgb_model <- xgb.train(params, model_train, params$nrounds, list(val = model_val), print_every_n = 20, early_stopping_rounds = 50)
+imp <- xgb.importance(colnames(model_train), model=myxgb_model)
+xgb.plot.importance(imp, top_n = 15)
+```
+
+
+## Make prediction
+```{r prediction, message = FALSE}
+predicted_xgb = predict(myxgb_model, xgb_test)
+sub <- fread("../input/sample_submission.csv")
+sub[, is_attributed := predicted_xgb]
+fwrite(sub, "xgb_0328.csv")
+```
+
+# Some other ideas to improve AUC
+
+* Use more observations for training. 
+* Use cross-validation to tune hyper-parameter mannually. For next step, I plan to try **xgb.cv** for hyper-parameter tuning. 
+* Lightgbm 
+* Blend the results of multiple models. Like in post: [simple-blend](https://www.kaggle.com/prashantkikani/talkingdata-simple-blend) I got my highest public leaderboard accuracy by combining multiple output files.  
+* Deep learning.  [Keras](https://keras.rstudio.com) is a Python deep learning library and it has a R interface 
+
+
+# Reference
+[data.table + xgb](https://www.kaggle.com/kailex/data-table-xgb)
+[TalkingData EDA and class imbalance](https://www.kaggle.com/kailex/data-table-xgb)
+[xgboost parameters](https://github.com/dmlc/xgboost/blob/master/doc/parameter.md)
+
+Thank you for reading my post and happy kaggling! 
