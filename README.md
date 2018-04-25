@@ -10,6 +10,7 @@
 - https://www.kaggle.com/yuliagm/be-careful-about-ips-as-a-signal
 - https://www.kaggle.com/pranav84/lightgbm-fixing-unbalanced-data-lb-0-9680  [Using var() and mean()]
 - https://www.kaggle.com/yuliagm/talkingdata-eda-plus-time-patterns [Data Visualization]
+- https://www.kaggle.com/andreikhropov/krishna-s-lgbm-to-catboost-undrsmpl-1-1/code (CatBoost)
 
 
 
